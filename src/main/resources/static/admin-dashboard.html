@@ -1,0 +1,532 @@
+	<!DOCTYPE html>
+	<html>
+	<head>
+	<title>Admin Dashboard</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+	
+	<style>
+	body {
+	    margin: 0;
+	    font-family: 'Segoe UI', sans-serif;
+	    background: linear-gradient(135deg, #141E30, #243B55);
+	    color: white;
+	}
+	
+	.navbar-custom {
+	    background: rgba(0,0,0,0.6);
+	    backdrop-filter: blur(12px);
+	}
+	
+	.dashboard-container {
+	    padding: 40px 20px;
+	}
+	
+	.stat-card {
+	    background: rgba(255,255,255,0.1);
+	    backdrop-filter: blur(20px);
+	    border-radius: 20px;
+	    padding: 30px;
+	    text-align: center;
+	    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+	    transition: 0.3s;
+	}
+	
+	.stat-card:hover {
+	    transform: translateY(-8px);
+	}
+	
+	.stat-number {
+	    font-size: 38px;
+	    font-weight: bold;
+	}
+	
+	.section-card {
+	    background: rgba(255,255,255,0.1);
+	    backdrop-filter: blur(20px);
+	    border-radius: 20px;
+	    padding: 30px;
+	    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+	    margin-top: 40px;
+	}
+	
+	.form-control {
+	    background: rgba(255,255,255,0.2);
+	    border: none;
+	    color: white;
+	}
+	
+	.form-control::placeholder {
+	    color: rgba(255,255,255,0.7);
+	}
+	
+	.form-control:focus {
+	    background: rgba(255,255,255,0.3);
+	    color: white;
+	    box-shadow: none;
+	}
+	
+	.btn-rounded {
+	    border-radius: 25px;
+	    padding: 6px 18px;
+	}
+	
+	.table {
+	    color: white;
+	}
+	
+	.table thead {
+	    background: rgba(255,255,255,0.15);
+	}
+	
+	.table tbody tr {
+	    background: rgba(255,255,255,0.05);
+	}
+	
+	.vote-toggle{
+	    width:70px;
+	    height:30px;
+	    border-radius:30px;
+	    display:flex;
+	    align-items:center;
+	    justify-content:center;
+	    font-weight:bold;
+	    cursor:pointer;
+	    color:white;
+	    transition:0.3s;
+	}
+	
+	.vote-toggle.on{
+	    background:#28a745;
+	}
+	
+	.vote-toggle.off{
+	    background:#dc3545;
+	}
+	/* 🔥 COMMON BUTTON HOVER EFFECT */
+button, .btn {
+    transition: all 0.3s ease;
+}
+
+/* HOVER EFFECT */
+button:hover, .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+/* CLICK EFFECT */
+button:active, .btn:active {
+    transform: scale(0.95);
+}
+.btn {
+    border-radius: 25px;
+}
+.vote-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(255,255,255,0.6);
+}
+	</style>
+	</head>
+	
+	<body>
+	
+	<!-- UPDATED NAVBAR -->
+	<nav class="navbar navbar-expand-lg navbar-dark navbar-custom px-4">
+
+<span class="navbar-brand fs-4">🔐 Admin Dashboard</span>
+
+<div class="ms-auto d-flex gap-3 align-items-center">
+
+<a href="results.html" class="btn btn-primary btn-rounded">
+📊 View Results
+</a>
+
+<div id="votingToggleBtn" onclick="toggleVotingSession()" class="vote-toggle off">
+OFF
+</div>
+
+<a href="blockchain.html" class="btn btn-warning btn-rounded">
+⛓ Blockchain
+</a>
+
+<button onclick="logout()" class="btn btn-danger btn-rounded">
+Logout
+</button>
+
+</div>
+
+</nav>
+	
+	<div class="container dashboard-container">
+	
+	    <!-- STATS -->
+	    <div class="row g-4">
+	
+	        <div class="col-md-4">
+	            <div class="stat-card">
+	                <h5>Total Voters</h5>
+	                <div id="totalVoters" class="stat-number">0</div>
+	            </div>
+	        </div>
+	
+	        <div class="col-md-4">
+	            <div class="stat-card">
+	                <h5>Votes Casted</h5>
+	                <div id="voted" class="stat-number">0</div>
+	            </div>
+	        </div>
+	
+	        <div class="col-md-4">
+	            <div class="stat-card">
+	                <h5>Remaining</h5>
+	                <div id="remaining" class="stat-number">0</div>
+	            </div>
+	        </div>
+	        <div class="col-md-4">
+	    <div class="stat-card">
+	        <h5>Voting %</h5>
+	        <div id="votePercent" class="stat-number">0%</div>
+	    </div>
+	</div>
+	
+	<div class="col-md-4">
+	    <div class="stat-card">
+	        <h5>Leading Party</h5>
+	        <div id="leadingParty" class="stat-number">--</div>
+	    </div>
+	</div>
+	
+	    </div>
+	
+	    <!-- ADD CANDIDATE -->
+	    <div class="section-card">
+	
+	        <h4>Add Candidate</h4>
+	
+	        <div class="mb-3">
+	            <input type="text" id="candidateName" class="form-control" placeholder="Candidate Name">
+	        </div>
+	
+	        <div class="mb-3">
+	            <input type="text" id="partyName" class="form-control" placeholder="Party Name">
+	        </div>
+	
+	        <button onclick="addCandidate()" class="btn btn-success w-100 btn-rounded">
+	            Add Candidate
+	        </button>
+	
+	        <p id="msg" class="text-center mt-3"></p>
+	
+	    </div>
+	
+	    <!-- CANDIDATE TABLE -->
+	    <div class="section-card">
+	
+	        <h4>Candidate List</h4>
+	
+	        <div class="table-responsive mt-3">
+	            <table class="table table-bordered text-center">
+	                <thead>
+	                    <tr>
+	                        <th>ID</th>
+	                        <th>Name</th>
+	                        <th>Party</th>
+	                        <th>Action</th>
+	                    </tr>
+	                </thead>
+	                <tbody id="candidateTable"></tbody>
+	            </table>
+	        </div>
+	    </div>
+		<div class="section-card">
+			<h4>Live Vote Graph</h4>
+			<canvas id="voteChart"></canvas>
+		</div>
+	</div>
+	
+	<script>
+	let chartInstance = null;
+	/* SESSION CHECK */
+	fetch("/api/admin/check", {
+    credentials: "include"   // 🔥 ADD THIS
+})
+.then(res => res.text())
+.then(status => {
+    if(status !== "active"){
+        window.location.href = "admin.html";
+    } else {
+        loadDashboard();
+        loadCandidates();
+        loadVoteStats();
+    }
+});
+	
+	/* DASHBOARD */
+	function loadDashboard(){
+	fetch("/api/admin/dashboard",{ credentials: "include" })
+	.then(res => res.json())
+	.then(data => {
+	
+	document.getElementById("totalVoters").innerText = data.totalVoters;
+	document.getElementById("voted").innerText = data.voted;
+	document.getElementById("remaining").innerText = data.remaining;
+	
+	let percent = (data.voted / data.totalVoters) * 100;
+	document.getElementById("votePercent").innerText = percent.toFixed(1) + "%";
+	
+	});
+	}
+	
+	/* LOAD CANDIDATES */
+	function loadCandidates(){
+	fetch("/api/admin/candidates",{ credentials: "include" })
+	.then(res => res.json())
+	.then(data => {
+	
+	    let table = document.getElementById("candidateTable");
+	    table.innerHTML = "";
+	
+	    data.forEach(candidate => {
+	        table.innerHTML += `
+	            <tr>
+	                <td>${candidate.id}</td>
+	                <td>${candidate.name}</td>
+	                <td>${candidate.partyName}</td>
+	                <td>
+	                    <button class="btn btn-danger btn-sm btn-rounded"
+	                        onclick="deleteCandidate(${candidate.id})">
+	                        Delete
+	                    </button>
+	                </td>
+	            </tr>
+	        `;
+	    });
+	
+	});
+	}
+	
+	/* ADD */
+	function addCandidate(){
+	
+	let name = document.getElementById("candidateName").value;
+	let party = document.getElementById("partyName").value;
+	
+	if(name === "" || party === ""){
+	    alert("Please fill all fields");
+	    return;
+	}
+	
+	fetch("/api/admin/addCandidate",{
+	credentials: "include",
+	method:"POST",
+	headers:{
+	"Content-Type":"application/json"
+	},
+	body:JSON.stringify({
+	    name: name,
+	    partyName: party
+	})
+	})
+	.then(res=>res.json())
+	.then(()=>{
+	document.getElementById("msg").innerText="Candidate Added Successfully!";
+	document.getElementById("candidateName").value="";
+	document.getElementById("partyName").value="";
+	loadCandidates();
+	});
+	}
+	
+	/* DELETE */
+	function deleteCandidate(id){
+	if(confirm("Are you sure?")){
+	fetch("/api/admin/deleteCandidate/" + id,{method:"DELETE"},{ credentials: "include" })
+	.then(()=>loadCandidates());
+	}
+	}
+	
+	/* LOADVOTES*/
+	function loadVoteStats(){
+	
+		fetch("/api/admin/results",{ credentials: "include" })
+		.then(res => res.json())
+		.then(data => {
+	
+		let bjp = 0
+		let congress = 0
+	
+		data.forEach(c => {
+	
+		if(c.partyName === "BJP"){
+		bjp += c.voteCount
+		}else{
+		congress += c.voteCount
+		}
+	
+		})
+	
+		let leading = "Tie"
+	
+		if(bjp > congress){
+		leading = "BJP"
+		}
+		else if(congress > bjp){
+		leading = "CONGRESS"
+		}
+	
+		document.getElementById("leadingParty").innerText = leading
+	
+		const ctx = document.getElementById("voteChart")
+	
+		if(chartInstance){
+		chartInstance.destroy()
+		}
+	
+		chartInstance = new Chart(ctx, {
+	
+		type:"bar",
+	
+		data:{
+		labels:["BJP","CONGRESS"],
+		datasets:[{
+		label:"Votes",
+		data:[bjp,congress],
+		backgroundColor:["orange","blue"]
+		}]
+		},
+	
+		options:{
+		responsive:true
+		}
+	
+		})
+	
+		})
+	
+		}
+		/* CheckVotingStatus*/
+	function checkVotingStatus(){
+	
+		fetch("/api/admin/votingStatus",{ credentials: "include" })
+		.then(res=>res.json())
+		.then(status=>{
+	
+		document.getElementById("votingToggle").checked = status;
+	
+		})
+	
+		}
+	
+		checkVotingStatus();
+		/*ToggleVoting Session*/
+		function toggleVotingSession(){
+
+let btn = document.getElementById("votingToggleBtn");
+
+if(btn.classList.contains("off")){
+
+fetch("/api/admin/startVoting",{method:"POST"},{ credentials: "include" })
+.then(res=>res.text())
+.then(data=>{
+
+btn.classList.remove("off");
+btn.classList.add("on");
+btn.innerText="ON";
+
+alert("Voters can now vote");
+
+});
+
+}else{
+
+fetch("/api/admin/stopVoting",{method:"POST"},{ credentials: "include" })
+.then(res=>res.text())
+.then(data=>{
+
+btn.classList.remove("on");
+btn.classList.add("off");
+btn.innerText="OFF";
+
+alert("Voters cannot vote now");
+
+});
+
+}
+
+}
+		
+		/* LOAD VOTING STATUS*/
+		function loadVotingStatus(){
+
+fetch("/api/admin/votingStatus",{ credentials: "include" })
+.then(res=>res.json())
+.then(status=>{
+
+let btn = document.getElementById("votingToggleBtn");
+
+if(status){
+
+btn.classList.remove("off");
+btn.classList.add("on");
+btn.innerText="ON";
+
+}else{
+
+btn.classList.remove("on");
+btn.classList.add("off");
+btn.innerText="OFF";
+
+}
+
+});
+
+}
+
+loadVotingStatus();
+		/* LOGOUT */
+	function logout(){
+	fetch("/api/admin/logout",{method:"POST"},{ credentials: "include" })
+	.then(()=>window.location.href="admin.html");
+	}
+	
+	setInterval(()=>{
+	
+		loadDashboard();
+		loadVoteStats();
+	
+		},5000)
+	
+		function toggleVoting(){
+	
+	let toggle = document.getElementById("votingToggle");
+	
+	if(toggle.checked){
+	
+	fetch("/api/admin/startVoting",{
+	method:"POST"
+	})
+	.then(res=>res.text())
+	.then(msg=>{
+	alert("Voting Session Started");
+	});
+	
+	}else{
+	
+	fetch("/api/admin/stopVoting",{
+	method:"POST"
+	})
+	.then(res=>res.text())
+	.then(msg=>{
+	alert("Voting Session Stopped");
+	});
+	
+	}
+	
+	}
+	
+	
+	</script>
+	
+	</body>
+	</html>

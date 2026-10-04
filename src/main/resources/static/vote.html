@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Vote Now</title>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+body{
+background:#f4f7fb;
+font-family:Segoe UI;
+}
+
+.header{
+background:linear-gradient(135deg,#4e73df,#224abe);
+color:white;
+padding:20px;
+text-align:center;
+font-size:26px;
+font-weight:bold;
+}
+
+.card-box{
+background:white;
+padding:25px;
+border-radius:10px;
+box-shadow:0 5px 20px rgba(0,0,0,0.1);
+}
+
+.profile-img{
+width:120px;
+height:120px;
+border-radius:50%;
+object-fit:cover;
+border:3px solid #4e73df;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<nav class="navbar navbar-dark bg-dark">
+<div class="container-fluid">
+
+<span class="navbar-brand">🗳 Online Voting System</span>
+
+<div>
+<button class="btn btn-info me-2" onclick="viewProfile()">
+Profile
+</button>
+
+<button class="btn btn-danger" onclick="logout()">
+Logout
+</button>
+</div>
+
+</div>
+</nav>
+
+<div class="header">
+Cast Your Vote
+</div>
+
+<div class="container mt-5">
+<div class="card-box">
+
+<h4 class="text-center mb-4">Candidate List</h4>
+
+<table class="table table-hover text-center">
+<thead class="table-dark">
+<tr>
+<th>Candidate Name</th>
+<th>Party</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="candidateTable"></tbody>
+
+</table>
+
+</div>
+</div>
+
+<!-- ================= PROFILE MODAL ================= -->
+
+<div class="modal fade" id="profileModal" tabindex="-1">
+<div class="modal-dialog">
+<div class="modal-content">
+
+<div class="modal-header">
+<h5 class="modal-title">Voter Profile</h5>
+<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body text-center">
+
+<img id="profilePhoto" class="profile-img mb-3" src="">
+<input type="file" id="editPhoto" class="form-control mt-2 d-none" accept="image/*">
+
+<h5 id="name"></h5>
+
+<p><b>Aadhaar:</b> <span id="aadhaar"></span></p>
+<p><b>Mobile:</b> <span id="mobile"></span></p>
+<p><b>Email:</b>
+<input type="email" id="pEmail" class="form-control text-center" disabled>
+</p>
+<p><b>Status:</b> <span id="status"></span></p>
+<button class="btn btn-warning mt-3" onclick="enableEdit()">
+    Edit Profile
+</button>
+
+<button class="btn btn-success mt-3 d-none" id="saveBtn" onclick="saveProfile()">
+    Save Changes
+</button>
+
+</div>
+
+</div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+let alreadyVoted = false
+
+// ================= LOAD CANDIDATES =================
+
+function loadCandidates(){
+
+fetch("/api/voter/candidates",{
+    credentials: "include"
+})
+.then(res => res.json())
+.then(data => {
+
+let table = ""
+
+data.forEach(candidate => {
+
+table += `
+<tr>
+<td>${candidate.name}</td>
+<td>${candidate.party_name}</td>
+<td>
+<button 
+class="btn btn-success vote-btn"
+onclick="vote(${candidate.id})">
+Vote
+</button>
+</td>
+</tr>
+`
+
+})
+
+document.getElementById("candidateTable").innerHTML = table
+
+checkVoteStatus()
+
+})
+
+}
+
+// ================= CHECK VOTE STATUS =================
+
+function checkVoteStatus(){
+
+fetch("/api/voter/profile",{
+    credentials: "include"
+})
+.then(res => res.json())
+.then(data => {
+
+if(data && data.hasVoted === true){
+
+alreadyVoted = true
+
+document.querySelectorAll(".vote-btn").forEach(btn=>{
+btn.disabled = true
+btn.innerText = "Already Voted"
+})
+
+}
+
+})
+
+}
+
+// ================= CAST VOTE =================
+
+function vote(id){
+
+if(alreadyVoted){
+alert("You Already Voted!")
+return
+}
+
+fetch("/api/voter/vote/"+id,{
+method:"POST",
+credentials: "include"
+})
+.then(res=>res.text())
+.then(msg=>{
+
+alert(msg)
+
+if(msg.toLowerCase().includes("success")){
+
+alreadyVoted = true
+
+document.querySelectorAll(".vote-btn").forEach(btn=>{
+btn.disabled = true
+btn.innerText = "Voted"
+})
+
+}
+
+})
+
+}
+
+// ================= PROFILE =================
+
+function viewProfile(){
+
+fetch("/api/voter/profile",{
+    credentials: "include"
+})
+.then(res=>res.json())
+.then(data=>{
+
+if(!data || !data.aadhaarNo){
+alert("Session expired, login again")
+window.location.href="login.html"
+return
+}
+
+// SET DATA
+document.getElementById("name").innerText = data.name
+document.getElementById("aadhaar").innerText = data.aadhaarNo
+document.getElementById("mobile").innerText = data.mobile
+document.getElementById("pEmail").value = data.email
+document.getElementById("status").innerText = data.hasVoted ? "Voted" : "Not Voted"
+
+// RESET EDIT MODE (🔥 IMPORTANT)
+document.getElementById("pEmail").disabled = true
+document.getElementById("editPhoto").classList.add("d-none")
+document.getElementById("saveBtn").classList.add("d-none")
+
+// PHOTO
+document.getElementById("profilePhoto").src = "/api/voter/photo/" + data.aadhaarNo + "?t=" + new Date().getTime()
+
+// SHOW MODAL
+let modal = new bootstrap.Modal(document.getElementById('profileModal'))
+modal.show()
+
+})
+
+}
+
+// ================= ENABLE EDIT =================
+
+function enableEdit(){
+
+document.getElementById("pEmail").disabled = false
+document.getElementById("editPhoto").classList.remove("d-none")
+document.getElementById("saveBtn").classList.remove("d-none")
+
+}
+
+// ================= PHOTO PREVIEW (🔥 NEW FEATURE) =================
+
+document.getElementById("editPhoto").addEventListener("change", function(){
+
+let file = this.files[0]
+
+if(file){
+    let reader = new FileReader()
+    reader.onload = function(e){
+        document.getElementById("profilePhoto").src = e.target.result
+    }
+    reader.readAsDataURL(file)
+}
+
+})
+
+// ================= SAVE PROFILE =================
+
+function saveProfile(){
+
+let email = document.getElementById("pEmail").value
+
+if(!email){
+    alert("Email required")
+    return
+}
+
+let formData = new FormData()
+formData.append("email", email)
+
+let file = document.getElementById("editPhoto").files[0]
+if(file){
+    formData.append("photo", file)
+}
+
+fetch("/api/voter/update-profile",{
+    method: "POST",
+    body: formData,
+    credentials: "include"
+})
+.then(res => res.text())
+.then(data => {
+
+alert(data)
+
+// RESET UI AFTER SAVE
+document.getElementById("pEmail").disabled = true
+document.getElementById("editPhoto").classList.add("d-none")
+document.getElementById("saveBtn").classList.add("d-none")
+
+// REFRESH PROFILE WITHOUT RELOAD
+viewProfile()
+
+})
+.catch(err => {
+    console.log(err)
+    alert("Update failed")
+})
+
+}
+
+// ================= LOGOUT =================
+
+function logout(){
+
+fetch("/api/voter/logout",{
+method:"POST",
+credentials: "include"
+})
+.then(res=>res.text())
+.then(msg=>{
+
+alert(msg)
+window.location.href="login.html"
+
+})
+
+}
+
+// ================= PAGE LOAD =================
+
+loadCandidates()
+
+</script>
+
+</body>
+</html>

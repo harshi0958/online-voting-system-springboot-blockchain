@@ -1,0 +1,43 @@
+/* 🔥 PRIMARY BUTTON */
+.btn-primary:hover {
+    transform: scale(1.05);
+    background: linear-gradient(45deg, #0072ff, #00c6ff);
+    box-shadow: 0 5px 15px rgba(0, 114, 255, 0.5);
+}
+
+/* ⚠️ WARNING BUTTON (Resend OTP) */
+.btn-warning:hover {
+    transform: scale(1.05);
+    background-color: #ffc107;
+    box-shadow: 0 5px 15px rgba(255, 193, 7, 0.6);
+}
+
+/* 🔘 OUTLINE BUTTON (Navbar) */
+.btn-outline-light:hover {
+    background-color: white;
+    color: black;
+    transform: scale(1.05);
+}
+
+button {
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 114, 255, 0.5);
+}
+
+.btn-warning:hover {
+    transform: scale(1.05);
+}
+
+.btn-outline-light:hover {
+    background-color: white;
+    color: black;
+    transform: scale(1.05);
+}
+
+button:active {
+    transform: scale(0.95);
+}

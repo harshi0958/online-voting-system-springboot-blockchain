@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Face Verification</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body{
+    background:#111;
+    color:white;
+    text-align:center;
+    padding-top:40px;
+}
+
+video, canvas{
+    width:350px;
+    border-radius:10px;
+    background:black;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Face Verification</h2>
+<p>Look at camera and verify your identity</p>
+
+<video id="video" autoplay></video>
+<canvas id="canvas" style="display:none;"></canvas>
+
+<br><br>
+
+<button onclick="capture()" class="btn btn-warning">
+Capture Face
+</button>
+
+<script>
+
+let stream;
+
+// START CAMERA
+navigator.mediaDevices.getUserMedia({video:true})
+.then(s=>{
+    stream = s;
+    document.getElementById("video").srcObject = s;
+})
+.catch(err=>{
+    alert("Camera not working");
+});
+
+
+// CAPTURE & VERIFY
+function capture(){
+
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video,0,0);
+
+    canvas.toBlob(function(blob){
+
+        let formData = new FormData();
+        formData.append("livePhoto", blob);
+
+        fetch("/api/voter/verify-face",{
+            method:"POST",
+            body: formData,
+            credentials:"include"
+        })
+        .then(res=>res.text())
+        .then(msg=>{
+
+            if(msg.includes("Success")){
+                window.location.href="vote.html";
+            }else{
+                alert("❌ " + msg);
+            }
+
+        });
+
+    },"image/jpeg");
+
+}
+
+</script>
+
+</body>
+</html>

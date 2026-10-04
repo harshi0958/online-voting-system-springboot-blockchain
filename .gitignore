@@ -1,0 +1,26 @@
+# Eclipse
+.classpath
+.project
+.settings/
+
+# IntelliJ
+.idea/
+
+# Build
+target/
+bin/
+
+# Local JDK & Maven
+jdk17/
+jdk17.zip
+maven/
+maven.zip
+
+# Uploads
+uploads/
+
+# Logs
+*.log
+
+# Local configuration / secrets
+src/main/resources/application.properties
